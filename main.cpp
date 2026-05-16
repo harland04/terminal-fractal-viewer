@@ -33,6 +33,7 @@ void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin
             }
         }
     }
+    box(win, 0, 0);
     wrefresh(win);
 }
 
@@ -67,32 +68,23 @@ int main() {
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
 
-    WINDOW *win = newwin(yMax, xMax, 0,0);
-    box(win, 0, 0);
-    keypad(stdscr, true);
-    keypad(win, true);
+    WINDOW *win = newwin(yMax-2, xMax-2, 0,0);
     refresh();
     
     drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+
     int input;
     int x = xMax/2;
     int y = yMax/2;
     std::string s;
     move(y, x);
     refresh();
-    
+    // Main Program Loop
     do{
+        // Get user input
         input = getch();
-        //     if(input == 10){
-        //         getyx(win, y, x);
-        //         yOrigin = yOrigin - range + y * (range/yMax);
-        //         xOrigin = xOrigin - range + x * (range/xMax);
-        //         range = range*zoomFactor;
-        //         werase(win);
-        //         drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
-        //         mvwprintw(win, 0, 0, "We are zooming");
-        //     }
-        // } 
+
+        // Check for cursor input and move cursor
         switch(input){
             case 119:
                 if(y > 0){
@@ -162,26 +154,30 @@ int main() {
                 break;
         }
 
-
+        // Zoom in or zoom out based on input ('b' for zoom in, 'v' for zoom out)
         if(input == 98){
-            getyx(win, y, x);
-            yOrigin = yOrigin - range + y * (range/yMax);
-            xOrigin = xOrigin - range + x * (range/xMax);
+            yOrigin = yOrigin - range/2 + y*(range/yMax);
+            xOrigin = xOrigin - range/2 + x*(range/xMax);
             range = range*zoomFactor;
             drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+            y = yMax/2;
+            x = xMax/2;
+            move(y, x);
             refresh();
         } else if(input == 118){
             getyx(win, y, x);
-            yOrigin = yOrigin - range + y * (range/yMax);
-            xOrigin = xOrigin - range + x * (range/xMax);
+            yOrigin = yOrigin - range/2 + y * (range/yMax);
+            xOrigin = xOrigin - range/2 + x * (range/xMax);
             range = range/zoomFactor;
             drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
-            mvwprintw(win, 0, 0, "We are zooming out");
+            y = yMax/2;
+            x = xMax/2;
+            move(y, x);
             refresh();
         }        
-
-        mvwprintw(win, 1, 1, "X: %d\rY: %d", x, y);
-        refresh();
+        // mvwprintw(win, 1, 1, "hello");
+        // move(y, x);
+        // wrefresh(win);
         
     } while(input != 'x');
 
