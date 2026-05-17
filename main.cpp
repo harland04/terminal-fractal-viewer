@@ -26,6 +26,76 @@ bool isInSet(std::complex<double> c, int zoomLevel) {
     return true;
 }
 
+class Fractal{
+    public:
+    Fractal(WINDOW *win);
+    ~Fractal();
+    void draw();
+    void moveLeft(int n);
+    void moveRight(int n);
+    void moveUp(int n);
+    void moveDown(int n);
+    void zoomIn();
+    void zoomOut();
+
+    private:
+    WINDOW *win;
+    int yMax, xMax;
+    char character = '#';
+    double range = 3.0;
+    double yOrigin = 0.0;
+    double xOrigin = -0.5;
+    int zoomLevel = 1;
+    float zoomFactor = 0.5;
+};
+
+// Constructor of Fractal
+Fractal::Fractal(WINDOW *win){
+    this->win = win;
+    getmaxyx(win, yMax, xMax);
+}
+
+Fractal::~Fractal(){}
+void Fractal::moveLeft(int n){
+    xOrigin -= n * (range/xMax);
+    draw();
+}
+void Fractal::moveRight(int n){
+    xOrigin += n * (range/xMax);
+    draw();
+}
+void Fractal::moveUp(int n){
+    yOrigin -= n * (range/yMax);
+    draw();
+}
+void Fractal::moveDown(int n){
+    yOrigin += n * (range/yMax);
+    draw();
+}
+void Fractal::zoomIn(){}
+void Fractal::zoomOut(){}
+
+void Fractal::draw(){
+    werase(win);
+    double real = 0;
+    double imag = 0;
+    std::complex<double> complex(real, imag);
+
+    for(int i = 0; i < xMax; i++){
+        for(int j = 0; j < yMax; j++){
+            real = (xOrigin - range/2) + i*(range/xMax);
+            imag = (yOrigin - range/2) + j*(range/yMax);
+            complex.real(real);
+            complex.imag(imag);
+            if(isInSet(complex, zoomLevel)){
+                mvwprintw(win, j, i, &character);
+            }
+        }
+    }
+    box(win, 0, 0);
+    wrefresh(win);
+}
+
 void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin, double range, char character, int zoomLevel) {
     werase(win);
     double real = 0;
@@ -77,15 +147,17 @@ int main() {
     keypad(win, true);
     keypad(stdscr, true);
     refresh();
+    Fractal fractal(win);
+
     
-    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
+    fractal.draw();
 
     int input;
     int x = xMax/2;
     int y = yMax/2;
-    std::string s;
     move(y, x);
     refresh();
+
     // Main Program Loop
     do{
         // Get user input
@@ -99,8 +171,7 @@ int main() {
                     move(y, x);
                     imagCoord = imagCoord + (range/yMax);
                 }else{
-                    yOrigin -= range/yMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
+                    fractal.moveUp(1);
                     move(y, x);
                 }
                 refresh();
@@ -111,8 +182,7 @@ int main() {
                     move(y, x);
                     imagCoord = imagCoord - (range/yMax);
                 }else{
-                    yOrigin += range/yMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
+                    fractal.moveDown(1);
                     move(y, x);
                 }
                 refresh();
@@ -123,8 +193,7 @@ int main() {
                     move(y, x);
                     realCoord = realCoord + (range/xMax);
                 }else{
-                    xOrigin += range/xMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
+                    fractal.moveRight(1);
                     move(y, x);
                 }
                 refresh();
@@ -135,31 +204,26 @@ int main() {
                     move(y, x);
                     realCoord = realCoord - (range/xMax);
                 }else{
-                    xOrigin -= range/xMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
+                    fractal.moveLeft(1);
                     move(y, x);
                 }
                 refresh();
                 break;
             // These might sort of break the coord variables.
             case KEY_UP:
-                yOrigin -= range/yMax;
-                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
+                fractal.moveUp(1);
                 move(y, x);
                 break;
             case KEY_DOWN:
-                yOrigin += range/yMax;
-                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
+            fractal.moveDown(1);
                 move(y, x);
                 break;
             case KEY_LEFT:
-                xOrigin -= range/xMax;
-                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
+            fractal.moveLeft(1);
                 move(y, x);
                 break;
             case KEY_RIGHT:
-                xOrigin += range/xMax;
-                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
+            fractal.moveRight(1);
                 move(y, x);
                 break;
             case 104:
