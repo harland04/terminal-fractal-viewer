@@ -37,10 +37,14 @@ class Fractal{
     void moveDown(int n);
     void zoomIn();
     void zoomOut();
+    void home();
 
     private:
     WINDOW *win;
     int yMax, xMax;
+    int cursorY, cursorX;
+    double xCoord = -0.5;
+    double yCoord = 0.0;
     char character = '#';
     double range = 3.0;
     double yOrigin = 0.0;
@@ -53,17 +57,12 @@ class Fractal{
 Fractal::Fractal(WINDOW *win){
     this->win = win;
     getmaxyx(win, yMax, xMax);
+    cursorY = yMax/2;
+    cursorX = xMax/2;
+    wmove(win, cursorY, cursorX);
 }
-
 Fractal::~Fractal(){}
-void Fractal::moveLeft(int n){
-    xOrigin -= n * (range/xMax);
-    draw();
-}
-void Fractal::moveRight(int n){
-    xOrigin += n * (range/xMax);
-    draw();
-}
+
 void Fractal::moveUp(int n){
     yOrigin -= n * (range/yMax);
     draw();
@@ -72,11 +71,50 @@ void Fractal::moveDown(int n){
     yOrigin += n * (range/yMax);
     draw();
 }
-void Fractal::zoomIn(){}
-void Fractal::zoomOut(){}
+void Fractal::moveLeft(int n){
+    xOrigin -= n * (range/xMax);
+    draw();
+}
+void Fractal::moveRight(int n){
+    xOrigin += n * (range/xMax);
+    draw();
+}
+
+void Fractal::zoomIn(){
+    zoomLevel++;
+    range *= zoomFactor;
+    getyx(win, cursorY, cursorX);
+    xOrigin -= ((xMax/2)-cursorX)*range/xMax; 
+    yOrigin -= ((yMax/2)-cursorY)*range/yMax;
+    draw();
+}
+void Fractal::zoomOut(){
+    if(zoomLevel > 1){
+        zoomLevel--;
+    }
+    getyx(win, cursorY, cursorX);
+    xOrigin += ((xMax/2)-cursorX)*range/xMax; 
+    yOrigin += ((yMax/2)-cursorY)*range/yMax;
+    range = range/zoomFactor;
+    draw();
+}
+
+void Fractal::home(){
+    zoomLevel = 1;
+    range = 3.0;
+    yOrigin = 0.0;
+    xOrigin = -0.5;
+    draw();
+}
 
 void Fractal::draw(){
+    getyx(win, cursorY, cursorX);
+    // mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", cursorX, cursorY, xCoord, yCoord);
+    // wmove(win, cursorY, cursorX);
+    // wrefresh(win);
+    // getch();
     werase(win);
+
     double real = 0;
     double imag = 0;
     std::complex<double> complex(real, imag);
@@ -88,11 +126,13 @@ void Fractal::draw(){
             complex.real(real);
             complex.imag(imag);
             if(isInSet(complex, zoomLevel)){
-                mvwprintw(win, j, i, &character);
+                mvwaddch(win, j, i, character);
             }
         }
     }
     box(win, 0, 0);
+    mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", cursorX, cursorY, xCoord, yCoord);
+    wmove(win, cursorY, cursorX);
     wrefresh(win);
 }
 
@@ -147,116 +187,114 @@ int main() {
     keypad(win, true);
     keypad(stdscr, true);
     refresh();
+
+    // Initialize fractal class
     Fractal fractal(win);
 
     
     fractal.draw();
 
-    int input;
-    int x = xMax/2;
-    int y = yMax/2;
-    move(y, x);
-    refresh();
+    int input, x, y;
+
 
     // Main Program Loop
     do{
         // Get user input
         input = getch();
+        getyx(win, y, x);
 
         // Check for cursor input and move cursor
         switch(input){
+            // 'w'
             case 119:
                 if(y > 0){
-                    y--;
-                    move(y, x);
-                    imagCoord = imagCoord + (range/yMax);
+                    wmove(win, y--, x);
+                    wrefresh(win);
                 }else{
                     fractal.moveUp(1);
-                    move(y, x);
                 }
-                refresh();
                 break;
+            // 's'
             case 115:
                 if(y < yMax){
-                    y++;
-                    move(y, x);
-                    imagCoord = imagCoord - (range/yMax);
+                    wmove(win, y++, x);
+                    wrefresh(win);
                 }else{
                     fractal.moveDown(1);
-                    move(y, x);
                 }
-                refresh();
                 break;
+            // 'd'
             case 100:
                 if(x < xMax){
-                    x++;
-                    move(y, x);
-                    realCoord = realCoord + (range/xMax);
+                    wmove(win, y, x++);
+                    wrefresh(win);
                 }else{
                     fractal.moveRight(1);
-                    move(y, x);
                 }
-                refresh();
                 break;
+            // 'a'
             case 97:
                 if(x > 0){
-                    x--;
-                    move(y, x);
-                    realCoord = realCoord - (range/xMax);
+                    wmove(win, y, x--);
+                    wrefresh(win);
                 }else{
                     fractal.moveLeft(1);
-                    move(y, x);
                 }
-                refresh();
                 break;
             // These might sort of break the coord variables.
             case KEY_UP:
                 fractal.moveUp(1);
-                move(y, x);
                 break;
             case KEY_DOWN:
-            fractal.moveDown(1);
-                move(y, x);
+                fractal.moveDown(1);
                 break;
             case KEY_LEFT:
-            fractal.moveLeft(1);
-                move(y, x);
+                fractal.moveLeft(1);
                 break;
             case KEY_RIGHT:
-            fractal.moveRight(1);
-                move(y, x);
+                fractal.moveRight(1);
                 break;
+            // 'h'
             case 104:
-                yOrigin = 0;
-                xOrigin = -0.5;
-                range = 3;
-                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
-                move(y, x);
+                // Make these variables global? or have a global version? if I do then i can probably make other fractals easy too.
+                fractal.home();
+                // yOrigin = 0;
+                // xOrigin = -0.5;
+                // range = 3;
+                // drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
+                break;
+            // Zoom in or zoom out based on input ('b' for zoom in, 'v' for zoom out)
+            case 98:
+                fractal.zoomIn();
+                break;
+            case 118:
+                fractal.zoomOut();
                 break;
             default:
                 break;
         }
 
         // Zoom in or zoom out based on input ('b' for zoom in, 'v' for zoom out)
-        if(input == 98){
-            zoomLevel++;
-            range = range*zoomFactor;
-            xOrigin -= ((xMax/2)-x)*range/xMax; 
-            yOrigin -= ((yMax/2)-y)*range/yMax;
-            drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
-            refresh();
-        } else if(input == 118){
-            if(zoomLevel > 1){
-                zoomLevel--;
-            }
-            xOrigin += ((xMax/2)-x)*range/xMax; 
-            yOrigin += ((yMax/2)-y)*range/yMax;
-            range = range/zoomFactor;
-            drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
-            refresh();
-        }        
-        mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", x, y, realCoord, imagCoord);
-        move(y, x);
+        // if(input == 98){
+        //     fractal.zoomIn();
+        //     zoomLevel++;
+        //     range = range*zoomFactor;
+        //     xOrigin -= ((xMax/2)-x)*range/xMax; 
+        //     yOrigin -= ((yMax/2)-y)*range/yMax;
+        //     drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
+        //     refresh();
+        // } else if(input == 118){
+        //     fractal.zoomOut();
+        //     if(zoomLevel > 1){
+        //         zoomLevel--;
+        //     }
+        //     xOrigin += ((xMax/2)-x)*range/xMax; 
+        //     yOrigin += ((yMax/2)-y)*range/yMax;
+        //     range = range/zoomFactor;
+        //     drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
+        //     refresh();
+        // }        
+        // mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", x, y, realCoord, imagCoord);
         wrefresh(win);
         
     } while(input != 'x');
