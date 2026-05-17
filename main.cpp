@@ -4,6 +4,7 @@
 // Better/dedicated movement keys (also would be good to optimize moving the frame around by only a little bit)
 // Make each draw fractal be called like 5 times for each zoom in/out to have motion and make it look smoother
 // Add a feature where you can go to the exact zoomLevel and origin so you can see cool structures.
+// Need to make sure the initial coordinates are actually the origin bc truncation/rounding error stuff.
 
 // Cool areas:
 // -0.804918
@@ -106,18 +107,46 @@ void Fractal::moveCursor(int ch){
 }
 
 void Fractal::moveUp(int n){
+    if(cursorY <= n){
+        cursorY = 0;
+    }else{
+        cursorY += n;
+    }
+    wmove(win, cursorY, cursorX);
+    
     yOrigin -= n * (range/yMax);
     draw();
 }
 void Fractal::moveDown(int n){
+    if(cursorY + n > yMax){
+        cursorY = yMax;
+    }else{
+        cursorY -= n;
+    }
+    wmove(win, cursorY, cursorX);
+
     yOrigin += n * (range/yMax);
     draw();
 }
 void Fractal::moveLeft(int n){
+    if(cursorX <= n){
+        cursorX = xMax;
+    }else{
+        cursorX += n;
+    }
+    wmove(win, cursorY, cursorX);
+
     xOrigin -= n * (range/xMax);
     draw();
 }
 void Fractal::moveRight(int n){
+    if(cursorX + n > xMax){
+        cursorX = xMax;
+    }else{
+        cursorX -= n;
+    }
+    wmove(win, cursorY, cursorX);
+
     xOrigin += n * (range/xMax);
     draw();
 }
@@ -178,113 +207,76 @@ void Fractal::draw(){
     wrefresh(win);
 }
 
-void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin, double range, char character, int zoomLevel) {
-    werase(win);
-    double real = 0;
-    double imag = 0;
-    std::complex<double> complex(0, 0);
-
-    for(int i = 0; i < xMax; i++){
-        for(int j = 0; j < yMax; j++){
-            real = (xOrigin - range/2) + i*(range/xMax);
-            imag = (yOrigin - range/2) + j*(range/yMax);
-            complex.real(real);
-            complex.imag(imag);
-            if(isInSet(complex, zoomLevel)){
-                mvwprintw(win, j, i, &character);
-            }
-        }
-    }
-    box(win, 0, 0);
-    wrefresh(win);
-}
 
 int main() {
+
+    int translateFactor = 5;
 
     // NCURSES START
     initscr();
     noecho();
     cbreak();
 
-    // Initialize Variables
-    double range = 3;
-    double xOrigin = -0.5;
-    double yOrigin = 0;
-    double realCoord = -0.5;
-    double imagCoord = 0;
-
-    // Change to zoomLevel
-    double zoomFactor = 0.5;
-    int zoomLevel = 1;
-    char character = '#';
-
-    // Get Terminal Size
+    // Get user's terminal size
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
     if(yMax%2){
         yMax--;
     }
 
+    // Create main window
     WINDOW *win = newwin(yMax, xMax, 0,0);
-    keypad(win, true);
+    // keypad(win, true);
     keypad(stdscr, true);
     refresh();
 
-    // Initialize fractal class
+    // Initialize fractal class and draw initial scene
     Fractal fractal(win);
-
-    
     fractal.draw();
 
-    int input, x, y;
-
+    int input;
 
     // Main Program Loop
     do{
         // Get user input
         input = getch();
-        getyx(win, y, x);
 
-        // Check for cursor input and move cursor
+        // Check whether user input is a valid command
         switch(input){
-            // 'w'
+
+            // 'wasd' controls the terminals cursor. 'w': 199. 's': 115. 'a': 97. 'd': 100.
             case 119:
                 fractal.moveCursor(119);
                 break;
-            // 's'
             case 115:
                 fractal.moveCursor(115);
                 break;
-            // 'd'
-            case 100:
-                fractal.moveCursor(100);
-                break;
-            // 'a'
             case 97:
                 fractal.moveCursor(97);
                 break;
-            // These might sort of break the coord variables.
+            case 100:
+                fractal.moveCursor(100);
+                break;
+
+            // Translate the image in a given direction
             case KEY_UP:
-                fractal.moveUp(1);
+                fractal.moveUp(translateFactor);
                 break;
             case KEY_DOWN:
-                fractal.moveDown(1);
+                fractal.moveDown(translateFactor);
                 break;
             case KEY_LEFT:
-                fractal.moveLeft(1);
+                fractal.moveLeft(translateFactor);
                 break;
             case KEY_RIGHT:
-                fractal.moveRight(1);
+                fractal.moveRight(translateFactor);
                 break;
+
             // 'h'
             case 104:
-                // Make these variables global? or have a global version? if I do then i can probably make other fractals easy too.
                 fractal.home();
-                // yOrigin = 0;
-                // xOrigin = -0.5;
-                // range = 3;
-                // drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
                 break;
+
             // Zoom in or zoom out based on input ('b' for zoom in, 'v' for zoom out)
             case 98:
                 fractal.zoomIn();
@@ -296,29 +288,8 @@ int main() {
                 break;
         }
 
-        // Zoom in or zoom out based on input ('b' for zoom in, 'v' for zoom out)
-        // if(input == 98){
-        //     fractal.zoomIn();
-        //     zoomLevel++;
-        //     range = range*zoomFactor;
-        //     xOrigin -= ((xMax/2)-x)*range/xMax; 
-        //     yOrigin -= ((yMax/2)-y)*range/yMax;
-        //     drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
-        //     refresh();
-        // } else if(input == 118){
-        //     fractal.zoomOut();
-        //     if(zoomLevel > 1){
-        //         zoomLevel--;
-        //     }
-        //     xOrigin += ((xMax/2)-x)*range/xMax; 
-        //     yOrigin += ((yMax/2)-y)*range/yMax;
-        //     range = range/zoomFactor;
-        //     drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, zoomLevel);
-        //     refresh();
-        // }        
-        // mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", x, y, realCoord, imagCoord);
         wrefresh(win);
-        
+
     } while(input != 'x');
 
 
