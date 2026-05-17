@@ -5,7 +5,9 @@
 // Make each draw fractal be called like 5 times for each zoom in/out to have motion and make it look smoother
 // Add a feature where you can go to the exact zoomLevel and origin so you can see cool structures.
 
-
+// Cool areas:
+// -0.804918
+// 0.168507
 #include <ncurses.h>
 #include <iostream>
 #include <complex>
@@ -67,9 +69,10 @@ int main() {
     // Get Terminal Size
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
-    xMax = 2*yMax;
 
     WINDOW *win = newwin(yMax, xMax, 0,0);
+    keypad(win, true);
+    keypad(stdscr, true);
     refresh();
     
     drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, count);
@@ -135,6 +138,26 @@ int main() {
                 }
                 refresh();
                 break;
+            // These might sort of break the coord variables.
+            case KEY_UP:
+                yOrigin -= range/yMax;
+                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,count);
+                move(y, x);
+                break;
+            case KEY_DOWN:
+                yOrigin += range/yMax;
+                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,count);
+                move(y, x);
+                break;
+            case KEY_LEFT:
+                xOrigin -= range/xMax;
+                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,count);
+                move(y, x);
+                break;
+            case KEY_RIGHT:
+                xOrigin += range/xMax;
+                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,count);
+                move(y, x);
             default:
                 break;
         }
