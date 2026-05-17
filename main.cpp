@@ -1,12 +1,21 @@
+// Make window always an odd number so that the tail/beak will display
+// More precision
+// Make only the edges show (idk how to do that or where to start tbh)
+// Better/dedicated movement keys (also would be good to optimize moving the frame around by only a little bit)
+// Make each draw fractal be called like 5 times for each zoom in/out to have motion and make it look smoother
+// Add a feature where you can go to the exact zoomLevel and origin so you can see cool structures.
+
+
 #include <ncurses.h>
 #include <iostream>
 #include <complex>
 
-bool isInSet(std::complex<double> c ) {
+bool isInSet(std::complex<double> c, int count) {
     int explode = 0;
     std::complex<double> z = c;
     std::complex<double> z1 = c;
-    for (int i = 0; i < 50; i++) {
+
+    for (int i = 0; i < 25*count; i++) {
         z = z1;
         z1 = z*z + c;
         if(abs(z1) > 2){
@@ -16,7 +25,7 @@ bool isInSet(std::complex<double> c ) {
     return true;
 }
 
-void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin, double range, char character) {
+void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin, double range, char character, int count) {
     werase(win);
     double real = 0;
     double imag = 0;
@@ -28,7 +37,7 @@ void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin
             imag = (yOrigin - range/2) + j*(range/yMax);
             complex.real(real);
             complex.imag(imag);
-            if(isInSet(complex)){
+            if(isInSet(complex, count)){
                 mvwprintw(win, j, i, &character);
             }
         }
@@ -36,8 +45,6 @@ void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin
     box(win, 0, 0);
     wrefresh(win);
 }
-
-
 
 int main() {
 
@@ -52,7 +59,9 @@ int main() {
     double yOrigin = 0;
     double realCoord = -0.5;
     double imagCoord = 0;
+    // Change to zoomLevel
     double zoomFactor = 0.5;
+    int count = 1;
     char character = '#';
 
     // Get Terminal Size
@@ -63,7 +72,7 @@ int main() {
     WINDOW *win = newwin(yMax, xMax, 0,0);
     refresh();
     
-    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, count);
 
     int input;
     int x = xMax/2;
@@ -85,7 +94,8 @@ int main() {
                     imagCoord = imagCoord + (range/yMax);
                 }else{
                     yOrigin -= range/yMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, count);
+                    move(y, x);
                 }
                 refresh();
                 break;
@@ -96,7 +106,8 @@ int main() {
                     imagCoord = imagCoord - (range/yMax);
                 }else{
                     yOrigin += range/yMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, count);
+                    move(y, x);
                 }
                 refresh();
                 break;
@@ -107,8 +118,8 @@ int main() {
                     realCoord = realCoord + (range/xMax);
                 }else{
                     xOrigin += range/xMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
-                    refresh();
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, count);
+                    move(y, x);
                 }
                 refresh();
                 break;
@@ -119,7 +130,8 @@ int main() {
                     realCoord = realCoord - (range/xMax);
                 }else{
                     xOrigin -= range/xMax;
-                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,count);
+                    move(y, x);
                 }
                 refresh();
                 break;
@@ -129,19 +141,23 @@ int main() {
 
         // Zoom in or zoom out based on input ('b' for zoom in, 'v' for zoom out)
         if(input == 98){
+            count++;
             range = range*zoomFactor;
             xOrigin -= ((xMax/2)-x)*range/xMax; 
             yOrigin -= ((yMax/2)-y)*range/yMax;
-            drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+            drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, count);
             refresh();
         } else if(input == 118){
+            if(count > 1){
+                count--;
+            }
             xOrigin += ((xMax/2)-x)*range/xMax; 
             yOrigin += ((yMax/2)-y)*range/yMax;
             range = range/zoomFactor;
-            drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+            drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character, count);
             refresh();
         }        
-        mvwprintw(win, 1, 0, "X: %d\nY: %d\nxOr: %lf\nyOr: %lf", x, y, realCoord, imagCoord);
+        mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", x, y, realCoord, imagCoord);
         move(y, x);
         wrefresh(win);
         
