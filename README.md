@@ -3,7 +3,7 @@
 Depencencies: ncurses
 
 Installation with apt:
-"sudo apt get-install libncurses-dev libncursesw6"
+"sudo apt get-install libncurses-dev libncursesw6 build-essential git"
 
 Google for other package managers.
 
