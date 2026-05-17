@@ -40,17 +40,6 @@ void drawFractal(WINDOW *win, int yMax, int xMax, double yOrigin, double xOrigin
 
 
 int main() {
-    // double real = 0;
-    // double imag = 0;
-    // std::complex<double> c(-0.3, 0.3);
-    // int x = isInSet(c);
-    // if (x == 0){
-    //     std::cout << "In Mandelbrot Set" << x << " ";
-    // } else if (x == 1){
-    //     std::cout << "NOT In Mandelbrot Set"  << x << " ";
-    // } else {
-    //     std::cout << "ERROR" << x << " ";
-    // }
 
     // NCURSES START
     initscr();
@@ -61,14 +50,17 @@ int main() {
     double range = 3;
     double xOrigin = -0.5;
     double yOrigin = 0;
+    double realCoord = -0.5;
+    double imagCoord = 0;
     double zoomFactor = 0.5;
     char character = '#';
 
     // Get Terminal Size
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
+    xMax = 2*yMax;
 
-    WINDOW *win = newwin(yMax-2, xMax-2, 0,0);
+    WINDOW *win = newwin(yMax, xMax, 0,0);
     refresh();
     
     drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
@@ -88,65 +80,46 @@ int main() {
         switch(input){
             case 119:
                 if(y > 0){
-                    s = std::to_string(mvinch(y,x));
-                    wattron(win, A_NORMAL);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_NORMAL);
-
                     y--;
-                    s = std::to_string(mvinch(y,x));
-
-                    wattron(win, A_REVERSE);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_REVERSE);
+                    move(y, x);
+                    imagCoord = imagCoord + (range/yMax);
+                }else{
+                    yOrigin -= range/yMax;
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
                 }
                 refresh();
                 break;
             case 115:
                 if(y < yMax){
-                    s = std::to_string(mvinch(y,x));
-                    wattron(win, A_NORMAL);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_NORMAL);
-
                     y++;
-                    s = std::to_string(mvinch(y,x));
-
-                    wattron(win, A_REVERSE);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_REVERSE);
+                    move(y, x);
+                    imagCoord = imagCoord - (range/yMax);
+                }else{
+                    yOrigin += range/yMax;
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
                 }
                 refresh();
                 break;
             case 100:
                 if(x < xMax){
-                    s = std::to_string(mvinch(y,x));
-                    wattron(win, A_NORMAL);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_NORMAL);
-
                     x++;
-                    s = std::to_string(mvinch(y,x));
-
-                    wattron(win, A_REVERSE);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_REVERSE);
+                    move(y, x);
+                    realCoord = realCoord + (range/xMax);
+                }else{
+                    xOrigin += range/xMax;
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
+                    refresh();
                 }
                 refresh();
                 break;
             case 97:
                 if(x > 0){
-                    s = std::to_string(mvinch(y,x));
-                    wattron(win, A_NORMAL);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_NORMAL);
-
                     x--;
-                    s = std::to_string(mvinch(y,x));
-
-                    wattron(win, A_REVERSE);
-                    mvwprintw(win, y, x, s.c_str());
-                    wattroff(win, A_REVERSE);
+                    move(y, x);
+                    realCoord = realCoord - (range/xMax);
+                }else{
+                    xOrigin -= range/xMax;
+                    drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
                 }
                 refresh();
                 break;
@@ -156,28 +129,21 @@ int main() {
 
         // Zoom in or zoom out based on input ('b' for zoom in, 'v' for zoom out)
         if(input == 98){
-            yOrigin = yOrigin - range/2 + y*(range/yMax);
-            xOrigin = xOrigin - range/2 + x*(range/xMax);
             range = range*zoomFactor;
+            xOrigin -= ((xMax/2)-x)*range/xMax; 
+            yOrigin -= ((yMax/2)-y)*range/yMax;
             drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
-            y = yMax/2;
-            x = xMax/2;
-            move(y, x);
             refresh();
         } else if(input == 118){
-            getyx(win, y, x);
-            yOrigin = yOrigin - range/2 + y * (range/yMax);
-            xOrigin = xOrigin - range/2 + x * (range/xMax);
+            xOrigin += ((xMax/2)-x)*range/xMax; 
+            yOrigin += ((yMax/2)-y)*range/yMax;
             range = range/zoomFactor;
             drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character);
-            y = yMax/2;
-            x = xMax/2;
-            move(y, x);
             refresh();
         }        
-        // mvwprintw(win, 1, 1, "hello");
-        // move(y, x);
-        // wrefresh(win);
+        mvwprintw(win, 1, 0, "X: %d\nY: %d\nxOr: %lf\nyOr: %lf", x, y, realCoord, imagCoord);
+        move(y, x);
+        wrefresh(win);
         
     } while(input != 'x');
 
