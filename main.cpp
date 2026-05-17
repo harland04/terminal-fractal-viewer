@@ -13,7 +13,6 @@
 #include <complex>
 
 bool isInSet(std::complex<double> c, int zoomLevel) {
-    int explode = 0;
     std::complex<double> z = c;
     std::complex<double> z1 = c;
 
@@ -70,6 +69,9 @@ int main() {
     // Get Terminal Size
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax);
+    if(yMax%2){
+        yMax--;
+    }
 
     WINDOW *win = newwin(yMax, xMax, 0,0);
     keypad(win, true);
@@ -159,6 +161,14 @@ int main() {
                 xOrigin += range/xMax;
                 drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
                 move(y, x);
+                break;
+            case 104:
+                yOrigin = 0;
+                xOrigin = -0.5;
+                range = 3;
+                drawFractal(win, yMax, xMax, yOrigin, xOrigin, range, character,zoomLevel);
+                move(y, x);
+                break;
             default:
                 break;
         }
