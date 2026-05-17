@@ -38,6 +38,7 @@ class Fractal{
     void zoomIn();
     void zoomOut();
     void home();
+    void moveCursor(int ch);
 
     private:
     WINDOW *win;
@@ -62,6 +63,47 @@ Fractal::Fractal(WINDOW *win){
     wmove(win, cursorY, cursorX);
 }
 Fractal::~Fractal(){}
+
+void Fractal::moveCursor(int ch){
+    switch(ch){
+        case 'w':
+        if(cursorY > 0){
+            cursorY--;
+            wmove(win, cursorY, cursorX);
+            wrefresh(win);
+        }else{
+            moveUp(1);
+        }
+        break;
+    case 's':
+        if(cursorY < yMax){
+            cursorY++;
+            wmove(win, cursorY, cursorX);
+            wrefresh(win);
+        }else{
+            moveDown(1);
+        }
+        break;
+    case 'a':
+        if(cursorX > 0){
+            cursorX--;
+            wmove(win, cursorY, cursorX);
+            wrefresh(win);
+        }else{
+            moveUp(1);
+        }
+        break;
+    case 'd':
+        if(cursorX < xMax){
+            cursorX++;
+            wmove(win, cursorY, cursorX);
+            wrefresh(win);
+        }else{
+            moveUp(1);
+        }
+        break;
+    }
+}
 
 void Fractal::moveUp(int n){
     yOrigin -= n * (range/yMax);
@@ -207,39 +249,19 @@ int main() {
         switch(input){
             // 'w'
             case 119:
-                if(y > 0){
-                    wmove(win, y--, x);
-                    wrefresh(win);
-                }else{
-                    fractal.moveUp(1);
-                }
+                fractal.moveCursor(119);
                 break;
             // 's'
             case 115:
-                if(y < yMax){
-                    wmove(win, y++, x);
-                    wrefresh(win);
-                }else{
-                    fractal.moveDown(1);
-                }
+                fractal.moveCursor(115);
                 break;
             // 'd'
             case 100:
-                if(x < xMax){
-                    wmove(win, y, x++);
-                    wrefresh(win);
-                }else{
-                    fractal.moveRight(1);
-                }
+                fractal.moveCursor(100);
                 break;
             // 'a'
             case 97:
-                if(x > 0){
-                    wmove(win, y, x--);
-                    wrefresh(win);
-                }else{
-                    fractal.moveLeft(1);
-                }
+                fractal.moveCursor(97);
                 break;
             // These might sort of break the coord variables.
             case KEY_UP:
