@@ -3,7 +3,7 @@
 // Make only the edges show (idk how to do that or where to start tbh)
 // Better/dedicated movement keys (also would be good to optimize moving the frame around by only a little bit)
 // Make each draw fractal be called like 5 times for each zoom in/out to have motion and make it look smoother
-// Add a feature where you can go to the exact zoomLevel and origin so you can see cool structures.
+// Add a feature where you can go to the exact zoomStep and origin so you can see cool structures.
 // Need to make sure the initial coordinates are actually the origin bc truncation/rounding error stuff.
 
 // Cool areas:
@@ -13,11 +13,11 @@
 #include <iostream>
 #include <complex>
 
-bool isInSet(std::complex<double> c, int zoomLevel) {
+bool isInSet(std::complex<double> c, int zoomStep) {
     std::complex<double> z = c;
     std::complex<double> z1 = c;
 
-    for (int i = 0; i < 25*zoomLevel; i++) {
+    for (int i = 0; i < 25*zoomStep; i++) {
         z = z1;
         z1 = z*z + c;
         if(abs(z1) > 2){
@@ -30,180 +30,188 @@ bool isInSet(std::complex<double> c, int zoomLevel) {
 class Fractal{
     public:
     Fractal(WINDOW *win);
-    ~Fractal();
-    void draw();
+
+    void moveCursor(int ch);
     void moveLeft(int n);
     void moveRight(int n);
     void moveUp(int n);
     void moveDown(int n);
+
+    void draw();
+    void home();
     void zoomIn();
     void zoomOut();
-    void home();
-    void moveCursor(int ch);
-
+    
     private:
     WINDOW *win;
-    int yMax, xMax;
-    int cursorY, cursorX;
-    double xCoord = -0.5;
-    double yCoord = 0.0;
-    char character = '#';
+    int screenHeight, screenWidth;
+    int cursorColumn, cursorRow;
+    double selectedX = -0.5;
+    double selectedY = 0.0;
+    char pixelChar = '#';
     double range = 3.0;
-    double yOrigin = 0.0;
-    double xOrigin = -0.5;
-    int zoomLevel = 1;
-    float zoomFactor = 0.5;
+    double originY = 0.0;
+    double originX = -0.5;
+    int zoomStep = 1;
+    float zoomScale = 0.5;
 };
 
 // Constructor of Fractal
 Fractal::Fractal(WINDOW *win){
     this->win = win;
-    getmaxyx(win, yMax, xMax);
-    cursorY = yMax/2;
-    cursorX = xMax/2;
-    wmove(win, cursorY, cursorX);
-}
-Fractal::~Fractal(){}
+    getmaxyx(win, screenHeight, screenWidth);
 
+    // Set intial cursor position to the middle of the window
+    cursorColumn = screenHeight/2;
+    cursorRow = screenWidth/2;
+    wmove(win, cursorColumn, cursorRow);
+}
+
+// Moves cursor based on user input
 void Fractal::moveCursor(int ch){
     switch(ch){
         case 'w':
-        if(cursorY > 0){
-            cursorY--;
-            wmove(win, cursorY, cursorX);
+        if(cursorColumn > 0){
+            cursorColumn--;
+            wmove(win, cursorColumn, cursorRow);
             wrefresh(win);
         }else{
             moveUp(1);
         }
         break;
     case 's':
-        if(cursorY < yMax){
-            cursorY++;
-            wmove(win, cursorY, cursorX);
+        if(cursorColumn < screenHeight){
+            cursorColumn++;
+            wmove(win, cursorColumn, cursorRow);
             wrefresh(win);
         }else{
             moveDown(1);
         }
         break;
     case 'a':
-        if(cursorX > 0){
-            cursorX--;
-            wmove(win, cursorY, cursorX);
+        if(cursorRow > 0){
+            cursorRow--;
+            wmove(win, cursorColumn, cursorRow);
             wrefresh(win);
         }else{
-            moveUp(1);
+            moveLeft(1);
         }
         break;
     case 'd':
-        if(cursorX < xMax){
-            cursorX++;
-            wmove(win, cursorY, cursorX);
+        if(cursorRow < screenWidth){
+            cursorRow++;
+            wmove(win, cursorColumn, cursorRow);
             wrefresh(win);
         }else{
-            moveUp(1);
+            moveRight(1);
         }
         break;
     }
 }
 
+// Translates the image up by n "pixels"
 void Fractal::moveUp(int n){
-    if(cursorY <= n){
-        cursorY = 0;
+    if(cursorColumn + n > screenHeight){
+        cursorColumn = screenHeight;
     }else{
-        cursorY += n;
+        cursorColumn += n;
     }
-    wmove(win, cursorY, cursorX);
+    wmove(win, cursorColumn, cursorRow);
     
-    yOrigin -= n * (range/yMax);
+    originY -= n * (range/screenHeight);
     draw();
 }
+// Translates the image down by n "pixels"
 void Fractal::moveDown(int n){
-    if(cursorY + n > yMax){
-        cursorY = yMax;
+    if(cursorColumn - n < 0){
+        cursorColumn = 0;
     }else{
-        cursorY -= n;
+        cursorColumn -= n;
     }
-    wmove(win, cursorY, cursorX);
+    wmove(win, cursorColumn, cursorRow);
 
-    yOrigin += n * (range/yMax);
+    originY += n * (range/screenHeight);
     draw();
 }
+// Translates the image left by n "pixels"
 void Fractal::moveLeft(int n){
-    if(cursorX <= n){
-        cursorX = xMax;
+    if(cursorRow <= n){
+        cursorRow = screenWidth;
     }else{
-        cursorX += n;
+        cursorRow += n;
     }
-    wmove(win, cursorY, cursorX);
+    wmove(win, cursorColumn, cursorRow);
 
-    xOrigin -= n * (range/xMax);
+    originX -= n * (range/screenWidth);
     draw();
 }
+// Translates the image right by n "pixels"
 void Fractal::moveRight(int n){
-    if(cursorX + n > xMax){
-        cursorX = xMax;
+    if(cursorRow + n > screenWidth){
+        cursorRow = screenWidth;
     }else{
-        cursorX -= n;
+        cursorRow -= n;
     }
-    wmove(win, cursorY, cursorX);
+    wmove(win, cursorColumn, cursorRow);
 
-    xOrigin += n * (range/xMax);
+    originX += n * (range/screenWidth);
     draw();
 }
 
+// Zoom in one level based on the zoom factor
 void Fractal::zoomIn(){
-    zoomLevel++;
-    range *= zoomFactor;
-    getyx(win, cursorY, cursorX);
-    xOrigin -= ((xMax/2)-cursorX)*range/xMax; 
-    yOrigin -= ((yMax/2)-cursorY)*range/yMax;
+    zoomStep++;
+    range *= zoomScale;
+    getyx(win, cursorColumn, cursorRow);
+    originX -= ((screenWidth/2)-cursorRow)*range/screenWidth; 
+    originY -= ((screenHeight/2)-cursorColumn)*range/screenHeight;
     draw();
 }
+// Zoom out one level based on the zoom factor
 void Fractal::zoomOut(){
-    if(zoomLevel > 1){
-        zoomLevel--;
+    if(zoomStep > 1){
+        zoomStep--;
     }
-    getyx(win, cursorY, cursorX);
-    xOrigin += ((xMax/2)-cursorX)*range/xMax; 
-    yOrigin += ((yMax/2)-cursorY)*range/yMax;
-    range = range/zoomFactor;
+    getyx(win, cursorColumn, cursorRow);
+    originX += ((screenWidth/2)-cursorRow)*range/screenWidth; 
+    originY += ((screenHeight/2)-cursorColumn)*range/screenHeight;
+    range = range/zoomScale;
     draw();
 }
 
+// Render initial fractal and cursor position
 void Fractal::home(){
-    zoomLevel = 1;
+    zoomStep = 1;
     range = 3.0;
-    yOrigin = 0.0;
-    xOrigin = -0.5;
+    originY = 0.0;
+    originX = -0.5;
+    cursorColumn = screenHeight/2;
+    cursorRow = screenWidth/2;
     draw();
 }
 
 void Fractal::draw(){
-    getyx(win, cursorY, cursorX);
-    // mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", cursorX, cursorY, xCoord, yCoord);
-    // wmove(win, cursorY, cursorX);
-    // wrefresh(win);
-    // getch();
+    getyx(win, cursorColumn, cursorRow);
     werase(win);
 
     double real = 0;
     double imag = 0;
     std::complex<double> complex(real, imag);
 
-    for(int i = 0; i < xMax; i++){
-        for(int j = 0; j < yMax; j++){
-            real = (xOrigin - range/2) + i*(range/xMax);
-            imag = (yOrigin - range/2) + j*(range/yMax);
+    for(int i = 0; i < screenWidth; i++){
+        for(int j = 0; j < screenHeight; j++){
+            real = (originX - range/2) + i*(range/screenWidth);
+            imag = (originY - range/2) + j*(range/screenHeight);
             complex.real(real);
             complex.imag(imag);
-            if(isInSet(complex, zoomLevel)){
-                mvwaddch(win, j, i, character);
+            if(isInSet(complex, zoomStep)){
+                mvwaddch(win, j, i, pixelChar);
             }
         }
     }
     box(win, 0, 0);
-    mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", cursorX, cursorY, xCoord, yCoord);
-    wmove(win, cursorY, cursorX);
+    // mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", cursorRow, cursorColumn, selectedX, selectedY);
+    wmove(win, cursorColumn, cursorRow);
     wrefresh(win);
 }
 
@@ -218,14 +226,14 @@ int main() {
     cbreak();
 
     // Get user's terminal size
-    int yMax, xMax;
-    getmaxyx(stdscr, yMax, xMax);
-    if(yMax%2){
-        yMax--;
+    int screenHeight, screenWidth;
+    getmaxyx(stdscr, screenHeight, screenWidth);
+    if(screenHeight%2){
+        screenHeight--;
     }
 
     // Create main window
-    WINDOW *win = newwin(yMax, xMax, 0,0);
+    WINDOW *win = newwin(screenHeight, screenWidth, 0,0);
     // keypad(win, true);
     keypad(stdscr, true);
     refresh();
@@ -272,7 +280,7 @@ int main() {
                 fractal.moveRight(translateFactor);
                 break;
 
-            // 'h'
+            // 'h': Bring user back to starting position
             case 104:
                 fractal.home();
                 break;
@@ -291,7 +299,6 @@ int main() {
         wrefresh(win);
 
     } while(input != 'x');
-
 
     endwin();
 }
