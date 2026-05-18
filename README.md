@@ -42,7 +42,7 @@ g++ main.cpp -lncurses -o fractal-viewer
 
 ## Windows Support
 
-This project would likely work on Windows by using the PDCurses library instead of `ncurses`.
+This project would likely work on Windows by using the PDCurses library instead of `ncurses`, however this is untested as of now.
 
 PDCurses: https://pdcurses.org/
 
