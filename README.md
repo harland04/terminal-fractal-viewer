@@ -60,12 +60,13 @@ You will probably also need a compatible compiler such as:
 
 | Key | Action |
 |---|---|
-| `W` | Move up |
-| `A` | Move left |
-| `S` | Move down |
-| `D` | Move right |
-| `B` | Zoom in |
-| `V` | Zoom out |
+| `w` | Move up |
+| `a` | Move left |
+| `s` | Move down |
+| `d` | Move right |
+| `b` | Zoom in |
+| `v` | Zoom out |
+| `x` | Quit |
 
 ---
 
