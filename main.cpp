@@ -1,3 +1,5 @@
+// Ideas/Future plans
+//
 // Make window always an odd number so that the tail/beak will display
 // More precision
 // Make only the edges show (idk how to do that or where to start tbh)
@@ -6,13 +8,12 @@
 // Add a feature where you can go to the exact zoomStep and origin so you can see cool structures.
 // Need to make sure the initial coordinates are actually the origin bc truncation/rounding error stuff.
 
-// Cool areas:
-// -0.804918
-// 0.168507
 #include <ncurses.h>
 #include <iostream>
 #include <complex>
 
+// Function to check if the given complex number is in the Mandelbrot set. Increases the number of iterations as 
+// user zooms farther in
 bool isInSet(std::complex<double> c, int zoomStep) {
     std::complex<double> z = c;
     std::complex<double> z1 = c;
@@ -48,12 +49,13 @@ class Fractal{
     int cursorColumn, cursorRow;
     double selectedX = -0.5;
     double selectedY = 0.0;
-    char pixelChar = '#';
+    int zoomStep = 1;
+    float zoomScale = 0.5;
     double range = 3.0;
     double originY = 0.0;
     double originX = -0.5;
-    int zoomStep = 1;
-    float zoomScale = 0.5;
+    char pixelChar = '#';
+
 };
 
 // Constructor of Fractal
@@ -158,7 +160,7 @@ void Fractal::moveRight(int n){
     draw();
 }
 
-// Zoom in one level based on the zoom factor
+// Zoom in one level
 void Fractal::zoomIn(){
     zoomStep++;
     range *= zoomScale;
@@ -167,7 +169,7 @@ void Fractal::zoomIn(){
     originY -= ((screenHeight/2)-cursorColumn)*range/screenHeight;
     draw();
 }
-// Zoom out one level based on the zoom factor
+// Zoom out one level
 void Fractal::zoomOut(){
     if(zoomStep > 1){
         zoomStep--;
@@ -210,7 +212,7 @@ void Fractal::draw(){
         }
     }
     box(win, 0, 0);
-    // mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", cursorRow, cursorColumn, selectedX, selectedY);
+    // FOR DEBUGGING: mvwprintw(win, 1, 0, "X: %d\nY: %d\nreal: %lf\nimag: %lf", cursorRow, cursorColumn, selectedX, selectedY);
     wmove(win, cursorColumn, cursorRow);
     wrefresh(win);
 }
@@ -218,14 +220,12 @@ void Fractal::draw(){
 
 int main() {
 
-    int translateFactor = 5;
-
-    // NCURSES START
+    // START NCURSES
     initscr();
     noecho();
     cbreak();
 
-    // Get user's terminal size
+    // Get user's terminal size and ensure screenHeigh will be an odd number for better visuals
     int screenHeight, screenWidth;
     getmaxyx(stdscr, screenHeight, screenWidth);
     if(screenHeight%2){
@@ -242,6 +242,10 @@ int main() {
     Fractal fractal(win);
     fractal.draw();
 
+    // Number of "pixels" to translate the image when using arrow keys
+    int translateFactor = 5;
+
+    // Used to store user input with getch()
     int input;
 
     // Main Program Loop
