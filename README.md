@@ -1,6 +1,8 @@
 # Terminal Fractal Viewer
 
-A very simple terminal based fractal viewer.
+A very simple terminal based fractal viewer. 
+
+<img width="304" height="170" alt="fractal-viewer-preview" src="https://github.com/user-attachments/assets/62e82417-4514-429b-b375-400b5f223eff" />
 
 ---
 
